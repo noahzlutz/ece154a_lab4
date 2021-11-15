@@ -1,14 +1,14 @@
 module testbench();
-    logic clk;
-    logic reset;
-    logic [31:0] writedata, dataadr;
-    logic memwrite;
+    reg clk;
+    reg reset;
+    reg [31:0] writedata, dataadr;
+    reg memwrite;
     // instantiate device to be tested
-    top dut (clk, reset, writedata, dataadr, memwrite);
+    top dut (clk, reset);
     // initialize test
     initial
-        begin
-            reset <= 1; # 22; reset <= 0;
+    	begin
+            	reset <= 1;#22; reset <= 0;
         end
     // generate clock to sequence tests
     always
@@ -22,7 +22,7 @@ module testbench();
                 if (dataadr === 84 & writedata === 7) begin
                     $display("Simulation succeeded");
                     $stop;
-                end else if (dataadr != = 80) begin
+                end else if (dataadr !== 80) begin
                     $display("Simulation failed");
                     $stop;
                 end

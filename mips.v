@@ -51,10 +51,10 @@ module maindec(input [5:0] op,
                 output  regdst, regwrite,
                 output  jump,
                 output  [1:0] aluop);
-    wire [8:0] controls;
+    reg [8:0] controls;
     assign {regwrite, regdst, alusrc, branch, memwrite,
             memtoreg, jump, aluop} = controls;
-    always_comb
+    always @(op) begin
         case(op)
             6'b000000: controls <= 9'b110000010; // RTYPE
             6'b100011: controls <= 9'b101001000; // LW
@@ -64,15 +64,16 @@ module maindec(input [5:0] op,
             6'b000010: controls <= 9'b000000100; // J
             default: controls <= 9'bxxxxxxxxx; // illegal op
         endcase
+	end
 endmodule
 
-module aludec(input logic [5:0] funct,
-                input logic [1:0] aluop,
-                output logic [2:0] alucontrol);
-    always_comb
-    case(aluop)
-        2'b00: alucontrol <= 3'b010; // add (for lw/sw/addi)
-        2'b01: alucontrol <= 3'b110; // sub (for beq)
+module aludec(input [5:0] funct,
+                input [1:0] aluop,
+                output  reg[2:0] alucontrol);
+    always @*
+    	case(aluop)
+        	2'b00: alucontrol <= 3'b010; // add (for lw/sw/addi)
+        	2'b01: alucontrol <= 3'b110; // sub (for beq)
         default: case(funct) // R-type instructions
             6'b100000: alucontrol <= 3'b010; // add
             6'b100010: alucontrol <= 3'b110; // sub
@@ -80,8 +81,8 @@ module aludec(input logic [5:0] funct,
             6'b100101: alucontrol <= 3'b001; // or
             6'b101010: alucontrol <= 3'b111; // slt
             default: alucontrol <= 3'bxxx; // ???
-        endcase
-    endcase
+        	endcase
+    	endcase
 endmodule
 
 // Todo: Implement datapath
@@ -122,7 +123,7 @@ module datapath(input          clk, reset,
     
     // ALU logic
     mux2 #(32)  srcbmux(writedata, signimm, alusrc, srcb);
-    alu         alu(srca, srcb, alucontrol, aluout, zero);
+    ALU         alu(srca, srcb, alucontrol, aluout, zero);
 
                 
 endmodule
@@ -131,20 +132,20 @@ module regfile(input  clk,
                 input  we3,
                 input  [4:0] ra1, ra2, wa3,
                 input  [31:0] wd3,
-                output  [31:0] rd1, rd2);
+                output [31:0] rd1, rd2);
 
-    wire [31:0] rf[31:0];
+    reg [31:0] rf[31:0];
     // three ported register file
     // read two ports combinationally
     // write third port on rising edge of clk
     // register 0 hardwired to 0
     // note: for pipelined processor, write third port
     // on falling edge of clk
-    always_ff @(posedge clk)
+    always @(posedge clk)
         if (we3) rf[wa3] <= wd3;
     
-    assign rd1 = (ra1 ! = 0) ? rf[ra1] : 0;
-    assign rd2 = (ra2 ! = 0) ? rf[ra2] : 0;
+    assign rd1 = (ra1 != 0) ? rf[ra1] : 0;
+    assign rd2 = (ra2 != 0) ? rf[ra2] : 0;
 
 endmodule
 
@@ -169,17 +170,17 @@ endmodule
 module flopr #(parameter WIDTH = 8)
                 (input clk, reset,
                 input [WIDTH-1:0] d,
-                output [WIDTH-1:0] q);
+                output reg[WIDTH-1:0] q);
 
-    always_ff @(posedge clk, posedge reset)
+    always @(posedge clk, posedge reset)
         if (reset) q <= 0;
         else q <= d;
 endmodule
 
 module mux2 #(parameter WIDTH = 8)
-                (input logic [WIDTH-1:0] d0, d1,
-                input logic s,
-                output logic [WIDTH-1:0] y);
+                (input [WIDTH-1:0] d0, d1,
+                input s,
+                output [WIDTH-1:0] y);
     
     assign y = s ? d1 : d0;
 endmodule
