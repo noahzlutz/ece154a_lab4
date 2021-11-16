@@ -27,7 +27,7 @@ module imem(input   [5:0]  a,
 
   initial
     begin
-      $readmemh("memfile.dat",RAM); // initialize memory with test program. Change this with memfile2.dat for the modified code
+      $readmemh("memfile2.dat",RAM); // initialize memory with test program. Change this with memfile2.dat for the modified code
     end
 
   assign rd = RAM[a]; // word aligned

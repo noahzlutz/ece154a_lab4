@@ -1,4 +1,4 @@
-module testbench();
+module tb();
     reg clk;
     reg reset;
     reg [31:0] writedata, dataadr;
